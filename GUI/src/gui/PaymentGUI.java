@@ -6,6 +6,8 @@ import java.awt.Point;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 public class PaymentGUI extends javax.swing.JFrame {
 
@@ -13,8 +15,7 @@ public class PaymentGUI extends javax.swing.JFrame {
         initComponents();
     }
     
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    @SuppressWarnings("unchecked")                         
     private void initComponents() throws ParseException {
 
         jPanel1 = new javax.swing.JPanel();
@@ -50,13 +51,26 @@ public class PaymentGUI extends javax.swing.JFrame {
         jLabel16 = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
         jButton4 = new javax.swing.JButton();
+        jButton5 = new javax.swing.JButton();
+        jButton6 = new javax.swing.JButton();
         
+        //Start Connection to stored Document for payments and get payments saved there.
         Connect con = new Connect();
         con.connectToDoc();
         double rentPaid = con.totalPayments();
+        
+        // Start Rent Object and calculate rent to be paid to date.
         Rent rent = new Rent();
         double rentOwed = rent.getRentOwingToDate();
-        double rentDeficit = rentPaid - rentOwed;
+        double rentOwing = rentPaid - rentOwed;
+        //Format for precision
+        String s = String.format("%.2f", rentOwing);
+        double rentDeficit = Double.parseDouble(s);
+        System.out.println("\n******\n******\n");
+        System.out.println(con.payList);
+        System.out.println("\n******\n******\n");
+        
+        //Get last Five payments made to be displayed on GUI
         String[] lastFive = con.getLastFivePayments();
         lastFiveSplit = new String[5][2];
         for(int i = 0; i < 5; i++) {
@@ -72,11 +86,14 @@ public class PaymentGUI extends javax.swing.JFrame {
             }
             System.out.println();
         }
+        
+        //Set variables for size and center GUI on window
         setSize(450, 480);
         setTitle("Rent Payment");
         centerFrame();
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
+        
+        //Creates the components for the GUI
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Date"));
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "dd", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.DEFAULT_POSITION));
@@ -207,13 +224,17 @@ public class PaymentGUI extends javax.swing.JFrame {
 
         jButton3.setText("Make Payment");
         jButton3.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 String date =  jTextField1.getText() + "/" + jTextField2.getText() + "/" + jTextField3.getText();
                 if(rent.isDateValid(Integer.parseInt(jTextField3.getText()), Integer.parseInt(jTextField2.getText()),
                         Integer.parseInt(jTextField1.getText())) && Integer.parseInt(jTextField3.getText()) > 2000) {
-                    System.out.println("!!!!!Done!!!!");
+                    System.out.println("Date: " + date + "\nAmount: " + jSlider1.getValue());
+                    if(con.confirmPayment(date, jSlider1.getValue())) {
+                        JOptionPane.showMessageDialog(new JFrame(), "Payment Recorded Successfully", "Payment", JOptionPane.INFORMATION_MESSAGE);
+                    }
                 }else {
-                    System.out.println("Not Valid");
+                    JOptionPane.showMessageDialog(new JFrame(), "Not a valid date", "DATE ERROR", JOptionPane.ERROR_MESSAGE);
                 }
                 //con.addPayment(jLabel2.getText(), date);
             }
@@ -394,7 +415,17 @@ public class PaymentGUI extends javax.swing.JFrame {
                 .addComponent(jLabel17))
         );
 
-        jButton4.setText("View All Transactions");
+        jButton4.setText("View Payments");
+        jButton4.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                con.openAllRent();
+            }
+        });
+       
+        jButton5.setText("View Account");
+
+        jButton6.setText("View Rent Dues");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -409,7 +440,12 @@ public class PaymentGUI extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton4)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(jButton6, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jButton4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jButton5))))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
@@ -431,7 +467,11 @@ public class PaymentGUI extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(jButton4)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jButton4)
+                            .addComponent(jButton5))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton6)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         
@@ -482,6 +522,8 @@ public class PaymentGUI extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
+    private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
