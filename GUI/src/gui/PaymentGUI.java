@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
@@ -63,6 +64,12 @@ public class PaymentGUI extends javax.swing.JFrame {
         Rent rent = new Rent();
         double rentOwed = rent.getRentOwingToDate();
         double rentOwing = rentPaid - rentOwed;
+        
+        //Database connect
+        DbConnect db = new DbConnect("renter", "Rawcat");
+        //db.connect("renter", "Rawcat");
+        Map map = db.lastFivePayments();
+        map.forEach( (k,v) -> System.out.println("Key: " + k + ": Value: " + v));
         //Format for precision
         String s = String.format("%.2f", rentOwing);
         double rentDeficit = Double.parseDouble(s);
